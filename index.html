@@ -1,120 +1,119 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Spin the Wheel</title>
-  <style>
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      font-family: Arial, sans-serif;
-    }
-
-    .card {
-      background: #fff;
-      width: 95%;
-      max-width: 420px;
-      padding: 20px;
-      border-radius: 16px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-      text-align: center;
-    }
-
-    h1 {
-      margin-top: 0;
-      color: #333;
-    }
-
-    textarea {
-      width: 100%;
-      height: 90px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      padding: 10px;
-      font-size: 16px;
-      resize: none;
-      box-sizing: border-box;
-    }
-
-    button {
-      margin-top: 15px;
-      width: 100%;
-      padding: 14px;
-      border: none;
-      border-radius: 12px;
-      font-size: 18px;
-      font-weight: bold;
-      color: white;
-      background: linear-gradient(135deg, #ff512f, #dd2476);
-      cursor: pointer;
-    }
-
-    button:active {
-      transform: scale(0.97);
-    }
-
-    .result {
-      margin-top: 20px;
-      font-size: 20px;
-      font-weight: bold;
-      color: #444;
-    }
-
-    .wheel {
-      margin: 20px auto;
-      width: 160px;
-      height: 160px;
-      border-radius: 50%;
-      border: 10px solid #eee;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      font-size: 18px;
-      transition: transform 2s ease-out;
-      background: #f9f9f9;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Colorful Spin Wheel</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #a18cd1, #fbc2eb);
+  margin: 0;
+  flex-direction: column;
+}
+#wheel-container {
+  position: relative;
+  width: 350px;
+  height: 350px;
+}
+canvas {
+  border-radius: 50%;
+  box-shadow: 0 0 30px rgba(0,0,0,0.5);
+}
+#spin-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 20px 40px;
+  border-radius: 50%;
+  background-color: #0b0b5b;
+  color: white;
+  font-size: 18px;
+  border: none;
+  cursor: pointer;
+}
+#pointer {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0; 
+  height: 0; 
+  border-left: 20px solid transparent;
+  border-right: 20px solid transparent;
+  border-bottom: 40px solid yellow;
+}
+</style>
 </head>
 <body>
 
-  <div class="card">
-    <h1>🎡 Spin the Wheel</h1>
+<div id="wheel-container">
+  <canvas id="wheel" width="350" height="350"></canvas>
+  <div id="pointer"></div>
+  <button id="spin-btn">SPIN</button>
+</div>
 
-    <textarea id="options" placeholder="Enter options (one per line)"></textarea>
+<script>
+const canvas = document.getElementById("wheel");
+const ctx = canvas.getContext("2d");
+const colors = ["#FF5733","#FFC300","#33FF57","#33C3FF","#8E33FF","#FF33A8","#FF8333","#33FFF2"];
+const segments = ["Prize 1","Prize 2","Prize 3","Prize 4","Prize 5","Prize 6","Prize 7","Prize 8"];
+const anglePerSegment = 2 * Math.PI / segments.length;
+let startAngle = 0;
+let spinning = false;
 
-    <div id="wheel" class="wheel">SPIN</div>
+function drawWheel() {
+  const radius = canvas.width / 2;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  segments.forEach((segment, i) => {
+    const start = startAngle + i * anglePerSegment;
+    const end = start + anglePerSegment;
+    ctx.beginPath();
+    ctx.moveTo(radius, radius);
+    ctx.arc(radius, radius, radius, start, end);
+    ctx.fillStyle = colors[i];
+    ctx.fill();
+    ctx.stroke();
+    ctx.save();
+    ctx.translate(radius, radius);
+    ctx.rotate(start + anglePerSegment/2);
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#fff";
+    ctx.font = "16px Arial";
+    ctx.fillText(segment, radius - 10, 5);
+    ctx.restore();
+  });
+}
 
-    <button onclick="spin()">SPIN NOW</button>
+drawWheel();
 
-    <div id="result" class="result"></div>
-  </div>
-
-  <script>
-    function spin() {
-      const text = document.getElementById("options").value.trim();
-      if (!text) {
-        alert("Enter some options first!");
-        return;
-      }
-
-      const items = text.split("\n").filter(i => i.trim() !== "");
-      const winner = items[Math.floor(Math.random() * items.length)];
-
-      const wheel = document.getElementById("wheel");
-      const rotate = 720 + Math.floor(Math.random() * 360);
-      wheel.style.transform = `rotate(${rotate}deg)`;
-
-      setTimeout(() => {
-        document.getElementById("result").innerText = "🎉 Result: " + winner;
-      }, 2000);
+document.getElementById("spin-btn").addEventListener("click", () => {
+  if(spinning) return;
+  spinning = true;
+  const spins = Math.floor(Math.random() * 5000) + 5000; // random spin
+  const duration = 5000;
+  const start = performance.now();
+  function animate(time) {
+    const elapsed = time - start;
+    const t = Math.min(elapsed / duration, 1);
+    const easeOut = 1 - Math.pow(1 - t, 3);
+    startAngle = easeOut * spins * Math.PI/180;
+    drawWheel();
+    if(t < 1) requestAnimationFrame(animate);
+    else {
+      spinning = false;
+      const winningIndex = Math.floor((segments.length - startAngle / (2*Math.PI) * segments.length) % segments.length);
+      alert("You won: " + segments[winningIndex]);
     }
-  </script>
+  }
+  requestAnimationFrame(animate);
+});
+</script>
 
 </body>
 </html>
