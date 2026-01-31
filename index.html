@@ -1,117 +1,120 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Shareable Spin Wheel</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-body {
-  font-family: Arial, sans-serif;
-  text-align: center;
-  background: #f5f5f5;
-  margin: 0;
-  padding: 20px;
-}
-h1 { margin-bottom: 10px; }
-textarea {
-  width: 100%;
-  max-width: 400px;
-  height: 80px;
-}
-canvas {
-  margin-top: 20px;
-  background: white;
-  border-radius: 50%;
-}
-button {
-  margin: 10px;
-  padding: 12px 20px;
-  font-size: 16px;
-}
-#result {
-  font-size: 20px;
-  margin-top: 15px;
-  font-weight: bold;
-}
-</style>
-</head>
-
-<body>
-<h1>🎡 Spin the Wheel</h1>
-<p>Enter options (one per line)</p>
-
-<textarea id="options">Option 1
-Option 2
-Option 3
-Option 4</textarea><br>
-
-<button onclick="spin()">SPIN</button>
-<button onclick="shareResult()">SHARE RESULT</button>
-
-<canvas id="wheel" width="300" height="300"></canvas>
-<div id="result"></div>
-
-<script>
-const canvas = document.getElementById("wheel");
-const ctx = canvas.getContext("2d");
-let options = [];
-let angle = 0;
-
-function drawWheel() {
-  ctx.clearRect(0, 0, 300, 300);
-  if (options.length === 0) return;
-  const slice = 2 * Math.PI / options.length;
-  options.forEach((opt, i) => {
-    ctx.beginPath();
-    ctx.fillStyle = `hsl(${i * 360 / options.length}, 70%, 60%)`;
-    ctx.moveTo(150, 150);
-    ctx.arc(150, 150, 150, angle + i * slice, angle + (i + 1) * slice);
-    ctx.fill();
-    ctx.save();
-    ctx.translate(150, 150);
-    ctx.rotate(angle + (i + 0.5) * slice);
-    ctx.fillStyle = "#000";
-    ctx.fillText(opt, 80, 5);
-    ctx.restore();
-  });
-}
-
-function spin() {
-  options = document.getElementById("options").value.split("\n").filter(o => o.trim());
-  if (options.length < 2) return alert("Add at least 2 options");
-  let spinAngle = Math.random() * 2000 + 2000;
-  let start = angle;
-  let startTime = null;
-
-  function animate(time) {
-    if (!startTime) startTime = time;
-    let progress = time - startTime;
-    angle = start + spinAngle * Math.exp(-progress / 2000);
-    drawWheel();
-    if (progress < 3000) {
-      requestAnimationFrame(animate);
-    } else {
-      let slice = 2 * Math.PI / options.length;
-      let index = Math.floor(((2 * Math.PI - angle % (2 * Math.PI)) / slice)) % options.length;
-      document.getElementById("result").innerText = "Result: " + options[index];
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Spin the Wheel</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      font-family: Arial, sans-serif;
     }
-  }
-  requestAnimationFrame(animate);
-}
 
-function shareResult() {
-  const text = document.getElementById("result").innerText;
-  if (!text) return alert("Spin first!");
-  if (navigator.share) {
-    navigator.share({
-      title: "Spin Wheel Result",
-      text: text,
-      url: location.href
-    });
-  } else {
-    alert("Sharing not supported");
-  }
-}
-</script>
+    .card {
+      background: #fff;
+      width: 95%;
+      max-width: 420px;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+
+    h1 {
+      margin-top: 0;
+      color: #333;
+    }
+
+    textarea {
+      width: 100%;
+      height: 90px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      padding: 10px;
+      font-size: 16px;
+      resize: none;
+      box-sizing: border-box;
+    }
+
+    button {
+      margin-top: 15px;
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: bold;
+      color: white;
+      background: linear-gradient(135deg, #ff512f, #dd2476);
+      cursor: pointer;
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    .result {
+      margin-top: 20px;
+      font-size: 20px;
+      font-weight: bold;
+      color: #444;
+    }
+
+    .wheel {
+      margin: 20px auto;
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      border: 10px solid #eee;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 18px;
+      transition: transform 2s ease-out;
+      background: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1>🎡 Spin the Wheel</h1>
+
+    <textarea id="options" placeholder="Enter options (one per line)"></textarea>
+
+    <div id="wheel" class="wheel">SPIN</div>
+
+    <button onclick="spin()">SPIN NOW</button>
+
+    <div id="result" class="result"></div>
+  </div>
+
+  <script>
+    function spin() {
+      const text = document.getElementById("options").value.trim();
+      if (!text) {
+        alert("Enter some options first!");
+        return;
+      }
+
+      const items = text.split("\n").filter(i => i.trim() !== "");
+      const winner = items[Math.floor(Math.random() * items.length)];
+
+      const wheel = document.getElementById("wheel");
+      const rotate = 720 + Math.floor(Math.random() * 360);
+      wheel.style.transform = `rotate(${rotate}deg)`;
+
+      setTimeout(() => {
+        document.getElementById("result").innerText = "🎉 Result: " + winner;
+      }, 2000);
+    }
+  </script>
+
 </body>
 </html>
